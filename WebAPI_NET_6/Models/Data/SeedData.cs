@@ -5,8 +5,10 @@ public class SeedData
     public static async Task InitializeAsync(IServiceProvider service)
     {
         var contect = service.GetRequiredService<AppDbContext>();
-
         await SeedAsync(contect);
+
+        var roleManager = service.GetRequiredService<RoleManager<IdentityRole>>();
+        await AddRolesToDatabaseAsync(roleManager);
     }
 
     protected static async Task SeedAsync(AppDbContext dbContext)
@@ -89,5 +91,21 @@ public class SeedData
 
         if (isChanged is true)
             await dbContext.SaveChangesAsync();
+    }
+
+    protected static async Task AddRolesToDatabaseAsync(RoleManager<IdentityRole> roleManager)
+    {
+        var rolesCount = roleManager.Roles.Count();
+        var enumRoles = Enum.GetValues(typeof(Roles));
+
+        if (rolesCount >= enumRoles.Length)
+            return;
+
+        foreach (var item in enumRoles)
+        {
+            var role = item.ToString();
+
+            var result = await roleManager.CreateAsync(new IdentityRole(role));
+        }
     }
 }
